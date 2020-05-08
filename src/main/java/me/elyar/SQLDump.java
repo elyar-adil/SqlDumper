@@ -1,9 +1,9 @@
 package me.elyar;
 
+
 import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -76,38 +76,37 @@ public class SQLDump {
         return createStatement;
     }
 
-    /**
-     * @param tableName
-     * @return
-     * @throws SQLException
-     */
-    public String cv(String tableName) throws SQLException, IOException {
+    public String getInsertSQL(String tableName) throws SQLException, IOException {
         Statement statement = connection.createStatement();
-        String sql = String.format("SELECT /*!40001 SQL_NO_CACHE */ * FROM %s", tableName);
+        String selectSQL = String.format("SELECT /*!40001 SQL_NO_CACHE */ * FROM %s", tableName);
 
-        ResultSet resultSet = statement.executeQuery(sql);
-        List<String> col = getColumnNames(resultSet);
+        String insertSQLTemplate = "INSERT INTO `%s` VALUES (%s);";
+
+        ResultSet resultSet = statement.executeQuery(selectSQL);
+
         ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
         int columnCount = resultSet.getMetaData().getColumnCount();
         while (resultSet.next()) {
+            List<String> rowValues = new ArrayList<>(columnCount);
             for (int i = 1; i <= columnCount; i++) {
                 int columnType = resultSetMetaData.getColumnType(i);
-                System.out.println(columnType);
                 if (columnType == Types.VARBINARY
                         || columnType == Types.BLOB
                         || columnType == Types.NCLOB) {
                     Blob blob = resultSet.getBlob("y");
-
                     if (blob != null) {
-                        System.out.println(Arrays.toString(blob.getBytes(1, 1)));
-
+                        String hex = byteToHex(blob.getBytes(1, (int) blob.length()));
+                        rowValues.add("0x" + hex);
+                    } else {
+                        rowValues.add("NULL");
                     }
+
                 } else {
-                    System.out.print(resultSet.getString(i));
+                    rowValues.add(resultSet.getString(i));
                 }
-                System.out.print(" ");
             }
-            System.out.println();
+            String rowValue = String.join(", ", rowValues);
+            System.out.println(String.format(insertSQLTemplate, tableName, rowValue));
 
         }
 
