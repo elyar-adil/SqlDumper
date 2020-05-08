@@ -11,6 +11,8 @@ import java.util.List;
  */
 public class SQLDump {
 
+    public static final String NULL = "NULL";
+    public static final String HEX_PREFIX = "0x";
     private final Connection connection;
 
     public SQLDump(String url) throws ClassNotFoundException, SQLException {
@@ -77,32 +79,50 @@ public class SQLDump {
     }
 
     public String getInsertSQL(String tableName) throws SQLException, IOException {
-        Statement statement = connection.createStatement();
         String selectSQL = String.format("SELECT /*!40001 SQL_NO_CACHE */ * FROM %s", tableName);
-
         String insertSQLTemplate = "INSERT INTO `%s` VALUES (%s);";
 
+        Statement statement = connection.createStatement();
         ResultSet resultSet = statement.executeQuery(selectSQL);
-
         ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
+
         int columnCount = resultSet.getMetaData().getColumnCount();
+
         while (resultSet.next()) {
             List<String> rowValues = new ArrayList<>(columnCount);
-            for (int i = 1; i <= columnCount; i++) {
-                int columnType = resultSetMetaData.getColumnType(i);
-                if (columnType == Types.VARBINARY
-                        || columnType == Types.BLOB
-                        || columnType == Types.NCLOB) {
-                    Blob blob = resultSet.getBlob("y");
-                    if (blob != null) {
-                        String hex = byteToHex(blob.getBytes(1, (int) blob.length()));
-                        rowValues.add("0x" + hex);
-                    } else {
-                        rowValues.add("NULL");
-                    }
-
-                } else {
-                    rowValues.add(resultSet.getString(i));
+            for (int columnIndex = 1; columnIndex <= columnCount; columnIndex++) {
+                int columnType = resultSetMetaData.getColumnType(columnIndex);
+                switch (columnType) {
+                    case Types.VARBINARY:
+                    case Types.BLOB:
+                    case Types.CLOB:
+                    case Types.NCLOB:
+                        Blob blob = resultSet.getBlob(columnIndex);
+                        if (resultSet.wasNull()) {
+                            rowValues.add(NULL);
+                        } else {
+                            String hex = byteToHex(blob.getBytes(1, (int) blob.length()));
+                            rowValues.add(HEX_PREFIX + hex);
+                        }
+                        break;
+                    case Types.VARCHAR:
+                        String varchar = resultSet.getString(columnIndex);
+                        if(resultSet.wasNull()) {
+                            rowValues.add(NULL);
+                        } else {
+                            varchar = escapeStringForMySQL(varchar);
+                            rowValues.add("'" + varchar + "'");
+                        }
+                        break;
+                    case Types.TIME:
+                    case Types.TIMESTAMP:
+                        String time = resultSet.getString(columnIndex);
+                        if (resultSet.wasNull()) {
+                            rowValues.add(NULL);
+                        } else {
+                            rowValues.add("'" + time + "'");
+                        }
+                        break;
                 }
             }
             String rowValue = String.join(", ", rowValues);
@@ -113,6 +133,19 @@ public class SQLDump {
         resultSet.close();
         statement.close();
         return null;
+    }
+
+
+    private String escapeStringForMySQL(String s) {
+        return s.replace("\\", "\\\\")
+                .replace("\b", "\\b")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t")
+                .replace("\\x1A", "\\Z")
+                .replace("\\x00", "\\0")
+                .replace("'", "\\'")
+                .replace("\"", "\\\"");
     }
 
     public static String byteToHex(byte[] bytes) {
