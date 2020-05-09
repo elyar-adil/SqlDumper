@@ -78,61 +78,89 @@ public class SQLDump {
         return createStatement;
     }
 
-    public String getInsertSQL(String tableName) throws SQLException, IOException {
+    public String getInsertSQL(String tableName) throws SQLException {
         String selectSQL = String.format("SELECT /*!40001 SQL_NO_CACHE */ * FROM %s", tableName);
-        String insertSQLTemplate = "INSERT INTO `%s` VALUES (%s);";
 
         Statement statement = connection.createStatement();
         ResultSet resultSet = statement.executeQuery(selectSQL);
-        ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
-
-        int columnCount = resultSet.getMetaData().getColumnCount();
 
         while (resultSet.next()) {
-            List<String> rowValues = new ArrayList<>(columnCount);
-            for (int columnIndex = 1; columnIndex <= columnCount; columnIndex++) {
-                int columnType = resultSetMetaData.getColumnType(columnIndex);
-                switch (columnType) {
-                    case Types.VARBINARY:
-                    case Types.BLOB:
-                    case Types.CLOB:
-                    case Types.NCLOB:
-                        Blob blob = resultSet.getBlob(columnIndex);
-                        if (resultSet.wasNull()) {
-                            rowValues.add(NULL);
-                        } else {
-                            String hex = byteToHex(blob.getBytes(1, (int) blob.length()));
-                            rowValues.add(HEX_PREFIX + hex);
-                        }
-                        break;
-                    case Types.VARCHAR:
-                        String varchar = resultSet.getString(columnIndex);
-                        if(resultSet.wasNull()) {
-                            rowValues.add(NULL);
-                        } else {
-                            varchar = escapeStringForMySQL(varchar);
-                            rowValues.add("'" + varchar + "'");
-                        }
-                        break;
-                    case Types.TIME:
-                    case Types.TIMESTAMP:
-                        String time = resultSet.getString(columnIndex);
-                        if (resultSet.wasNull()) {
-                            rowValues.add(NULL);
-                        } else {
-                            rowValues.add("'" + time + "'");
-                        }
-                        break;
-                }
-            }
-            String rowValue = String.join(", ", rowValues);
-            System.out.println(String.format(insertSQLTemplate, tableName, rowValue));
-
+            String insertSQL = nextInsert(tableName, resultSet);
+            System.out.println(insertSQL);
         }
 
         resultSet.close();
         statement.close();
         return null;
+    }
+
+    private final static String INSERT_SQL_TEMPLATE = "INSERT INTO `%s` VALUES (%s);";
+
+    private String nextInsert(String tableName, ResultSet resultSet) throws SQLException {
+        ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
+
+        int columnCount = resultSet.getMetaData().getColumnCount();
+        List<String> rowValues = new ArrayList<>(columnCount);
+        for (int columnIndex = 1; columnIndex <= columnCount; columnIndex++) {
+            int columnType = resultSetMetaData.getColumnType(columnIndex);
+            switch (columnType) {
+                // binary types (convert to hex):
+                case Types.VARBINARY:
+                case Types.BLOB:
+                case Types.CLOB:
+                case Types.NCLOB:
+                    addColumnValue(resultSet, rowValues, columnIndex, false, false, true);
+                    break;
+                // text type (surrounded by quotation marks and escaped):
+                case Types.VARCHAR:
+                    addColumnValue(resultSet, rowValues, columnIndex, true, true, false);
+                    break;
+                // types need to be surrounded by quotation marks without escaping
+                case Types.TIME:
+                case Types.TIMESTAMP:
+                    addColumnValue(resultSet, rowValues, columnIndex, false, true, false);
+                    break;
+                // types with plan string value
+                case Types.NUMERIC:
+                case Types.BIGINT:
+                case Types.INTEGER:
+                case Types.SMALLINT:
+                case Types.TINYINT:
+                case Types.DECIMAL:
+                case Types.BIT:
+                    addColumnValue(resultSet, rowValues, columnIndex, false, false, false);
+                    break;
+                default:
+                    throw new SQLDataException("Unsupported SQL type: " + columnType);
+            }
+        }
+        String rowValue = String.join(", ", rowValues);
+        return String.format(INSERT_SQL_TEMPLATE, tableName, rowValue);
+    }
+
+    private void addColumnValue(ResultSet resultSet, List<String> rowValues, int columnIndex,
+                                boolean escaping, boolean quotation, boolean binary) throws SQLException {
+        String columnValue = NULL;
+        if (binary) {
+            Blob blob = resultSet.getBlob(columnIndex);
+            if (blob != null) {
+                columnValue = HEX_PREFIX + byteToHex(blob.getBytes(1, (int) blob.length()));
+            }
+        } else {
+            columnValue = resultSet.getString(columnIndex);
+        }
+
+        if (resultSet.wasNull()) {
+            columnValue = NULL;
+        } else {
+            if (escaping) {
+                columnValue = escapeStringForMySQL(columnValue);
+            }
+            if (quotation) {
+                columnValue = "'" + columnValue + "'";
+            }
+        }
+        rowValues.add(columnValue);
     }
 
 
