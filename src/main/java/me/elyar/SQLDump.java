@@ -77,7 +77,24 @@ public class SQLDump {
         statement.close();
         return createStatement;
     }
+    /**
+     * @param procedureName
+     * @return
+     * @throws SQLException
+     */
+    public String getCreateProcedureSQL(String procedureName) throws SQLException {
+        Statement statement = connection.createStatement();
+        String sql = String.format("SHOW CREATE PROCEDURE `%s`", procedureName);
 
+        ResultSet resultSet = statement.executeQuery(sql);
+        resultSet.next();
+
+        String createStatement = resultSet.getString(2);
+
+        resultSet.close();
+        statement.close();
+        return createStatement;
+    }
     public String getInsertSQL(String tableName) throws SQLException {
         String selectSQL = String.format("SELECT /*!40001 SQL_NO_CACHE */ * FROM %s", tableName);
 
