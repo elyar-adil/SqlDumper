@@ -104,31 +104,38 @@ public class SQLDump {
         for (int columnIndex = 1; columnIndex <= columnCount; columnIndex++) {
             int columnType = resultSetMetaData.getColumnType(columnIndex);
             switch (columnType) {
-                // binary types (convert to hex):
-                case Types.VARBINARY:
-                case Types.BLOB:
-                case Types.CLOB:
-                case Types.NCLOB:
-                    addColumnValue(resultSet, rowValues, columnIndex, false, false, true);
-                    break;
                 // text type (surrounded by quotation marks and escaped):
+                case Types.BIT:
+                case Types.TINYINT:
+                case Types.SMALLINT:
+                case Types.INTEGER:
+                case Types.BIGINT:
+                case Types.FLOAT:
+                case Types.REAL:
+                case Types.DOUBLE:
+                case Types.NUMERIC:
+                case Types.DECIMAL:
+                    addColumnValue(resultSet, rowValues, columnIndex, false, false, false);
+                    break;
+                case Types.CHAR:
                 case Types.VARCHAR:
+                case Types.LONGVARCHAR:
                     addColumnValue(resultSet, rowValues, columnIndex, true, true, false);
                     break;
                 // types need to be surrounded by quotation marks without escaping
+                case Types.DATE:
                 case Types.TIME:
                 case Types.TIMESTAMP:
                     addColumnValue(resultSet, rowValues, columnIndex, false, true, false);
                     break;
-                // types with plan string value
-                case Types.NUMERIC:
-                case Types.BIGINT:
-                case Types.INTEGER:
-                case Types.SMALLINT:
-                case Types.TINYINT:
-                case Types.DECIMAL:
-                case Types.BIT:
-                    addColumnValue(resultSet, rowValues, columnIndex, false, false, false);
+                // binary types (convert to hex):
+                case Types.BINARY:
+                case Types.VARBINARY:
+                case Types.LONGVARBINARY:
+                case Types.BLOB:
+                case Types.CLOB:
+                case Types.NCLOB:
+                    addColumnValue(resultSet, rowValues, columnIndex, false, false, true);
                     break;
                 default:
                     throw new SQLDataException("Unsupported SQL type: " + columnType);
