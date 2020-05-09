@@ -15,8 +15,8 @@ public class SQLDump {
     public static final String HEX_PREFIX = "0x";
     private final Connection connection;
 
-    public SQLDump(String url) throws ClassNotFoundException, SQLException {
-        Class.forName("com.mysql.cj.jdbc.Driver");
+    public SQLDump(String url) throws SQLException {
+        DriverManager.registerDriver(new com.mysql.jdbc.Driver());
         connection = DriverManager.getConnection(url);
     }
 
