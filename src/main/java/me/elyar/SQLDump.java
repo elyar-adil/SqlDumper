@@ -16,7 +16,7 @@ public class SQLDump {
     private final Connection connection;
 
     public SQLDump(String url) throws SQLException {
-        DriverManager.registerDriver(new com.mysql.jdbc.Driver());
+        DriverManager.registerDriver(new com.mysql.cj.jdbc.Driver());
         connection = DriverManager.getConnection(url);
     }
 
@@ -77,6 +77,7 @@ public class SQLDump {
         statement.close();
         return createStatement;
     }
+
     /**
      * @param procedureName
      * @return
@@ -95,6 +96,7 @@ public class SQLDump {
         statement.close();
         return createStatement;
     }
+
     public String getInsertSQL(String tableName) throws SQLException {
         String selectSQL = String.format("SELECT /*!40001 SQL_NO_CACHE */ * FROM %s", tableName);
 
@@ -200,22 +202,37 @@ public class SQLDump {
                 .replace("\"", "\\\"");
     }
 
-    public static String byteToHex(byte[] bytes) {
+    /**
+     * Convert array of bytes to equivalent hexadecimal {@code String} value.
+     *
+     * @param byteArray
+     * @return
+     */
+    public static String byteToHex(byte[] byteArray) {
         StringBuilder stringBuilder = new StringBuilder();
-        for (byte b : bytes) {
+        for (byte b : byteArray) {
             stringBuilder.append(String.format("%02X", b));
         }
         return stringBuilder.toString();
     }
 
-    public List<String> getColumnNames(ResultSet rs) throws SQLException {
-        ResultSetMetaData rsmd = rs.getMetaData();
-        List<String> retval = new ArrayList<>(rsmd.getColumnCount());
+    /**
+     * Return list of column names from given {@code ResultSet}
+     *
+     * @param resultSet the {@code ResultSet} to retrieve column names from
+     * @return {@code List<String>} contains column names
+     * @throws SQLException
+     */
+    private List<String> getColumnNameList(ResultSet resultSet) throws SQLException {
+        ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
+        // set initialCapacity to column count
+        List<String> columnNameList = new ArrayList<>(resultSetMetaData.getColumnCount());
 
-        for (int i = 0; i < rsmd.getColumnCount(); i++) {
-            retval.add(rsmd.getColumnName(i + 1));
+        // column index starts from 1
+        for (int columnIndex = 1; columnIndex <= resultSetMetaData.getColumnCount(); columnIndex++) {
+            columnNameList.add(resultSetMetaData.getColumnName(columnIndex));
         }
 
-        return retval;
+        return columnNameList;
     }
 }
