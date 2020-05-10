@@ -203,10 +203,10 @@ public class SQLDump {
     }
 
     /**
-     * Convert array of bytes to equivalent hexadecimal {@code String} value.
+     * Convert array of {@code byte} to equivalent {@code String} of hexadecimal value.
      *
-     * @param byteArray
-     * @return
+     * @param byteArray {@code byte[]} to be converted to hexadecimal value
+     * @return {@code String} of hexadecimal value
      */
     public static String byteToHex(byte[] byteArray) {
         StringBuilder stringBuilder = new StringBuilder();
