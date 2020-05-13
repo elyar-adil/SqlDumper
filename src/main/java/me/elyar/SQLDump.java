@@ -1,7 +1,5 @@
 package me.elyar;
 
-
-import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,8 +12,27 @@ public class SQLDump {
     public static final String NULL = "NULL";
     public static final String HEX_PREFIX = "0x";
     private final Connection connection;
+    private DbmsType dbmsType;
 
-    public SQLDump(String url) throws SQLException {
+    public SQLDump(String url) throws SQLException, SQLDumpException {
+        url = url.trim();
+        String[] splitedUrl = url.split(":");
+        if (!"jdbc".equals(splitedUrl[0]) || splitedUrl.length < 2) {
+            throw new SQLDumpException("Malformed jdbc url!");
+        }
+        String dbms = splitedUrl[1];
+        switch (dbms) {
+            case "mysql":
+                dbmsType = DbmsType.MY_SQL;
+                break;
+            case "sqlserver":
+                dbmsType = DbmsType.SQL_SERVER;
+                break;
+            default:
+                dbmsType = DbmsType.UNSUPPORTED;
+                break;
+        }
+        System.out.println(dbmsType);
         DriverManager.registerDriver(new com.mysql.cj.jdbc.Driver());
         connection = DriverManager.getConnection(url);
     }
