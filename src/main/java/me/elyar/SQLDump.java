@@ -1,5 +1,8 @@
 package me.elyar;
 
+import javax.sql.DataSource;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,30 +14,23 @@ public class SQLDump {
 
     public static final String NULL = "NULL";
     public static final String HEX_PREFIX = "0x";
-    private final Connection connection;
-    private DbmsType dbmsType;
 
-    public SQLDump(String url) throws SQLException, SQLDumpException {
-        url = url.trim();
-        String[] splitedUrl = url.split(":");
-        if (!"jdbc".equals(splitedUrl[0]) || splitedUrl.length < 2) {
-            throw new SQLDumpException("Malformed jdbc url!");
-        }
-        String dbms = splitedUrl[1];
-        switch (dbms) {
-            case "mysql":
-                dbmsType = DbmsType.MY_SQL;
-                break;
-            case "sqlserver":
-                dbmsType = DbmsType.SQL_SERVER;
+    private final Connection connection;
+    private final DbmsType dbmsType;
+
+    public SQLDump(DataSource dataSource, DbmsType dbmsType) throws SQLException {
+        this.connection = dataSource.getConnection();
+        this.dbmsType = dbmsType;
+    }
+
+    public void dump(OutputStream outputStream) {
+        switch (dbmsType) {
+            case MY_SQL:
                 break;
             default:
-                dbmsType = DbmsType.UNSUPPORTED;
-                break;
+            break;
         }
-        System.out.println(dbmsType);
-        DriverManager.registerDriver(new com.mysql.cj.jdbc.Driver());
-        connection = DriverManager.getConnection(url);
+
     }
 
     /**
