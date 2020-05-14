@@ -7,10 +7,14 @@ import javax.sql.DataSource;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.sql.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Dump database using JDBC without binary any dependencies.
+ *
  * @author Elyar Adil
  * @since 1.0
  */
@@ -45,7 +49,7 @@ public class SqlDump {
     private void printHead(PrintWriter printWriter) throws SQLException {
         DatabaseMetaData metaData = connection.getMetaData();
 
-        printWriter.println("-- SqlDump 2020");
+        printWriter.println("-- SqlDump v1.0");
         printWriter.println();
         printWriter.println("-- HOST: " +metaData.getURL().split("/")[2]);
         printWriter.println("-- DBMS Name: " + metaData.getDatabaseProductName());
@@ -85,6 +89,8 @@ public class SqlDump {
 
     private void printDumpSuffix(PrintWriter printWriter) {
         printWriter.println(ENABLE_FOREIGN_KEY_CHECKS_SQL);
+        printWriter.println();
+        printWriter.println("-- Dump completed on " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
     }
 
     private void printDumpPrefix(PrintWriter printWriter) {

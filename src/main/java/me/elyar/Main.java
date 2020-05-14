@@ -8,12 +8,12 @@ import java.sql.SQLException;
 
 public class Main {
 
-    public static void main(String[] args) throws SQLException, SqlDumpException {
+    public static void main(String[] args) throws SQLException,  SqlDumpException {
         MysqlDataSource mysqlDataSource = new MysqlDataSource();
-        mysqlDataSource.setUrl("jdbc:mysql://localhost/activiti?user=root&password=password&serverTimezone=GMT%2B8");
+        mysqlDataSource.setUrl("jdbc:mysql://localhost:3306/activiti?user=root&password=password&serverTimezone=GMT%2B8");
         System.out.println(mysqlDataSource.getDatabaseName());
         SqlDump sqlDump = new SqlDump(mysqlDataSource);
-        sqlDump.dumpView(System.out, "as");
+        sqlDump.dumpTable(System.out, "act_re_procdef");
     }
 
 
