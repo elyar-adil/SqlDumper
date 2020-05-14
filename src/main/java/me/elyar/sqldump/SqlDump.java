@@ -1,5 +1,6 @@
 package me.elyar.sqldump;
 
+import me.elyar.sqldump.exceptions.SqlDumpException;
 import me.elyar.sqldump.utilities.ValueUtility;
 
 import javax.sql.DataSource;

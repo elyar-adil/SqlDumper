@@ -2,7 +2,7 @@ package me.elyar;
 
 import com.mysql.cj.jdbc.MysqlDataSource;
 import me.elyar.sqldump.SqlDump;
-import me.elyar.sqldump.SqlDumpException;
+import me.elyar.sqldump.exceptions.SqlDumpException;
 
 import java.sql.SQLException;
 
