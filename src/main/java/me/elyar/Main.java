@@ -1,14 +1,21 @@
 package me.elyar;
 
-import java.sql.*;
+import com.mysql.cj.jdbc.MysqlDataSource;
+import me.elyar.sqldump.SqlDump;
+import me.elyar.sqldump.SqlDumpException;
+
+import java.sql.SQLException;
+import java.util.Locale;
 
 public class Main {
 
-    public static void main(String[] args) throws SQLException, SQLDumpException {
-
-        SQLDump sqlDump = new SQLDump("jdbc:mysql://localhost/activiti?user=root&password=password&serverTimezone=GMT%2B8");
-        sqlDump.getInsertSQL("act_ru_task");
-
+    public static void main(String[] args) throws SQLException, SqlDumpException {
+        MysqlDataSource mysqlDataSource = new MysqlDataSource();
+        mysqlDataSource.setUrl("jdbc:mysql://localhost/activiti?user=root&password=password&serverTimezone=GMT%2B8");
+        System.out.println(mysqlDataSource.getDatabaseName());
+        SqlDump sqlDump = new SqlDump(mysqlDataSource);
+        sqlDump.dumpTable(System.out, "act_re_procdef");
+        System.out.println(Locale.getDefault().getLanguage());
     }
 
 
