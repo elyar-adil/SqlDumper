@@ -5,7 +5,6 @@ import me.elyar.sqldump.SqlDump;
 import me.elyar.sqldump.SqlDumpException;
 
 import java.sql.SQLException;
-import java.util.Locale;
 
 public class Main {
 
@@ -14,8 +13,7 @@ public class Main {
         mysqlDataSource.setUrl("jdbc:mysql://localhost/activiti?user=root&password=password&serverTimezone=GMT%2B8");
         System.out.println(mysqlDataSource.getDatabaseName());
         SqlDump sqlDump = new SqlDump(mysqlDataSource);
-        sqlDump.dumpTable(System.out, "act_re_procdef");
-        System.out.println(Locale.getDefault().getLanguage());
+        sqlDump.dumpView(System.out, "as");
     }
 
 

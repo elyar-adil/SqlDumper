@@ -21,12 +21,17 @@ public class SqlDump {
     public static final String RIGHT_QUOTATION_MARK = "'";
     public static final String SQL_DELIMITER = ";";
     public static final String VALUE_DELIMITER = ", ";
-
+    private final static String SET_UTF8MB4_SQL = "SET NAMES utf8mb4;";
+    private final static String DISABLE_FOREIGN_KEY_CHECKS_SQL = "SET FOREIGN_KEY_CHECKS = 0;";
+    private final static String ENABLE_FOREIGN_KEY_CHECKS_SQL = "SET FOREIGN_KEY_CHECKS = 1;";
     private final static String SEPARATE_INSERT_SQL_TEMPLATE = "INSERT INTO `%s` VALUES (%s);";
     private final static String COMPACT_INSERT_SQL_PREFIX_TEMPLATE = "INSERT INTO `%s` VALUES ";
 
     private final static String COMMENT_TABLE_STRUCTURE ="--\n-- Table structure for table `%s`\n--";
+    private final static String COMMENT_VIEW_STRUCTURE ="--\n-- View structure for table `%s`\n--";
     private final static String COMMENT_RECORDS ="--\n-- Data of table `%s`\n--";
+    private final static String SHOW_TABLES = "SHOW FULL TABLES WHERE Table_type != 'VIEW'";
+    private final static String SHOW_VIEWS = "SHOW FULL TABLES WHERE Table_type = 'VIEW'";
 
     private final Connection connection;
 
@@ -35,12 +40,42 @@ public class SqlDump {
         this.connection = dataSource.getConnection();
     }
 
-    public void close() throws SQLException {
-        connection.close();
-    }
-
     public void dumpTable(OutputStream outputStream, String tableName) throws SQLException, SqlDumpException {
         PrintWriter printWriter = new PrintWriter(outputStream);
+
+        printDumpPrefix(printWriter);
+
+        dumpTable(tableName, printWriter);
+
+        printDumpSuffix(printWriter);
+
+        printWriter.flush();
+        printWriter.close();
+    }
+    public void dumpView(OutputStream outputStream, String tableName) throws SQLException, SqlDumpException {
+        PrintWriter printWriter = new PrintWriter(outputStream);
+
+        printDumpPrefix(printWriter);
+
+        dumpView(tableName, printWriter);
+
+        printDumpSuffix(printWriter);
+
+        printWriter.flush();
+        printWriter.close();
+    }
+
+    private void printDumpSuffix(PrintWriter printWriter) {
+        printWriter.println(ENABLE_FOREIGN_KEY_CHECKS_SQL);
+    }
+
+    private void printDumpPrefix(PrintWriter printWriter) {
+        printWriter.println(SET_UTF8MB4_SQL);
+        printWriter.println(DISABLE_FOREIGN_KEY_CHECKS_SQL);
+        printWriter.println();
+    }
+
+    private void dumpTable(String tableName, PrintWriter printWriter) throws SQLException, SqlDumpException {
         printWriter.println(String.format(COMMENT_TABLE_STRUCTURE, tableName));
         String DROP_TABLE_TEMPLATE = "DROP TABLE IF EXISTS `%s`;";
         String dropTableSql = String.format(DROP_TABLE_TEMPLATE, tableName);
@@ -50,10 +85,24 @@ public class SqlDump {
         printWriter.println();
         printWriter.println(String.format(COMMENT_RECORDS, tableName));
         getCompactInsertSQL(tableName, printWriter);
-        printWriter.flush();
-        printWriter.close();
+        printWriter.println();
+    }
+    private void dumpView(String tableName, PrintWriter printWriter) throws SQLException {
+        printWriter.println(String.format(COMMENT_VIEW_STRUCTURE, tableName));
+        String DROP_TABLE_TEMPLATE = "DROP VIEW IF EXISTS `%s`;";
+        String dropTableSql = String.format(DROP_TABLE_TEMPLATE, tableName);
+        printWriter.println(dropTableSql);
+
+        printWriter.println(getCreateViewSQL(tableName) + SQL_DELIMITER);
+        printWriter.println();
     }
 
+    private void selectDatabase(String database) throws SQLException {
+        Statement statement = connection.createStatement();
+        String sql = String.format("USE `%s`", database);
+        statement.executeQuery(sql).close();
+        statement.close();
+    }
     /**
      * Get SQL statement {@code String} that creates the specified table.
      *
@@ -62,8 +111,22 @@ public class SqlDump {
      * @throws SQLException if a database access error occurs
      */
     public String getCreateTableSQL(String tableName) throws SQLException {
+        return getCreateStatement(tableName, "SHOW CREATE TABLE `%s`");
+    }
+    /**
+     * Get SQL statement {@code String} that creates the specified view.
+     *
+     * @param viewName name of the view
+     * @return SQL statement {@code String}
+     * @throws SQLException if a database access error occurs
+     */
+    public String getCreateViewSQL(String viewName) throws SQLException {
+        return getCreateStatement(viewName, "SHOW CREATE VIEW `%s`");
+    }
+
+    private String getCreateStatement(String viewName, String sqlTemplate) throws SQLException {
         Statement statement = connection.createStatement();
-        String sql = String.format("SHOW CREATE TABLE `%s`", tableName);
+        String sql = String.format(sqlTemplate, viewName);
         ResultSet resultSet = statement.executeQuery(sql);
         resultSet.next();
         // First column is same as tableName, create statement is at second column.
@@ -99,17 +162,7 @@ public class SqlDump {
      * @throws SQLException
      */
     public String getCreateDatabaseSQL(String databaseName) throws SQLException {
-        Statement statement = connection.createStatement();
-        String sql = String.format("SHOW CREATE DATABASE IF NOT EXISTS `%s`", databaseName);
-
-        ResultSet resultSet = statement.executeQuery(sql);
-        resultSet.next();
-
-        String createStatement = resultSet.getString(2);
-
-        resultSet.close();
-        statement.close();
-        return createStatement;
+        return getCreateStatement(databaseName, "SHOW CREATE DATABASE IF NOT EXISTS `%s`");
     }
 
     /**
@@ -118,18 +171,9 @@ public class SqlDump {
      * @throws SQLException
      */
     public String getCreateProcedureSQL(String procedureName) throws SQLException {
-        Statement statement = connection.createStatement();
-        String sql = String.format("SHOW CREATE PROCEDURE `%s`", procedureName);
-
-        ResultSet resultSet = statement.executeQuery(sql);
-        resultSet.next();
-
-        String createStatement = resultSet.getString(2);
-
-        resultSet.close();
-        statement.close();
-        return createStatement;
+        return getCreateStatement(procedureName, "SHOW CREATE PROCEDURE `%s`");
     }
+
     public void getInsertSQL(String tableName, PrintWriter printWriter) throws SQLException, SqlDumpException {
         String selectSQL = String.format("SELECT /*!40001 SQL_NO_CACHE */ * FROM %s", tableName);
 
@@ -146,7 +190,7 @@ public class SqlDump {
     }
 
     public void getCompactInsertSQL(String tableName, PrintWriter printWriter) throws SQLException, SqlDumpException {
-        String selectSQL = String.format("SELECT /*!40001 SQL_NO_CACHE */ * FROM %s", tableName);
+        String selectSQL = String.format("SELECT /*!40001 SQL_NO_CACHE */ * FROM `%s`", tableName);
 
         Statement statement = connection.createStatement();
         ResultSet resultSet = statement.executeQuery(selectSQL);
@@ -155,6 +199,7 @@ public class SqlDump {
         while (resultSet.next()) {
             String value = nextValue(resultSet);
             printWriter.print(value);
+
             if(!resultSet.isLast()) {
                 printWriter.print(VALUE_DELIMITER);
             }
