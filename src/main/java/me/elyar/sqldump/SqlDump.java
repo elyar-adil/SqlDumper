@@ -27,9 +27,9 @@ public class SqlDump {
     private final static String SEPARATE_INSERT_SQL_TEMPLATE = "INSERT INTO `%s` VALUES (%s);";
     private final static String COMPACT_INSERT_SQL_PREFIX_TEMPLATE = "INSERT INTO `%s` VALUES ";
 
-    private final static String COMMENT_TABLE_STRUCTURE ="--\n-- Table structure for table `%s`\n--";
-    private final static String COMMENT_VIEW_STRUCTURE ="--\n-- View structure for table `%s`\n--";
-    private final static String COMMENT_RECORDS ="--\n-- Data of table `%s`\n--";
+    private final static String COMMENT_TABLE_STRUCTURE = "--\n-- Table structure for %s\n--";
+    private final static String COMMENT_VIEW_STRUCTURE = "--\n-- View structure for %s\n--";
+    private final static String COMMENT_RECORDS = "--\n-- Data of table `%s`\n--";
     private final static String SHOW_TABLES = "SHOW FULL TABLES WHERE Table_type != 'VIEW'";
     private final static String SHOW_VIEWS = "SHOW FULL TABLES WHERE Table_type = 'VIEW'";
 
@@ -38,10 +38,24 @@ public class SqlDump {
 
     public SqlDump(DataSource dataSource) throws SQLException {
         this.connection = dataSource.getConnection();
+
+    }
+
+    private void printHead(PrintWriter printWriter) throws SQLException {
+        DatabaseMetaData metaData = connection.getMetaData();
+
+        printWriter.println("-- SqlDump 2020");
+        printWriter.println();
+        printWriter.println("-- HOST: " +metaData.getURL().split("/")[2]);
+        printWriter.println("-- DBMS Name: " + metaData.getDatabaseProductName());
+        printWriter.println("-- DBMS Version: " + metaData.getDatabaseProductVersion());
+        printWriter.println("-- ----------------------------------------------------");
+        printWriter.println();
     }
 
     public void dumpTable(OutputStream outputStream, String tableName) throws SQLException, SqlDumpException {
         PrintWriter printWriter = new PrintWriter(outputStream);
+        printHead(printWriter);
 
         printDumpPrefix(printWriter);
 
@@ -52,8 +66,11 @@ public class SqlDump {
         printWriter.flush();
         printWriter.close();
     }
+
     public void dumpView(OutputStream outputStream, String tableName) throws SQLException, SqlDumpException {
         PrintWriter printWriter = new PrintWriter(outputStream);
+
+        printHead(printWriter);
 
         printDumpPrefix(printWriter);
 
@@ -87,6 +104,7 @@ public class SqlDump {
         getCompactInsertSQL(tableName, printWriter);
         printWriter.println();
     }
+
     private void dumpView(String tableName, PrintWriter printWriter) throws SQLException {
         printWriter.println(String.format(COMMENT_VIEW_STRUCTURE, tableName));
         String DROP_TABLE_TEMPLATE = "DROP VIEW IF EXISTS `%s`;";
@@ -103,6 +121,7 @@ public class SqlDump {
         statement.executeQuery(sql).close();
         statement.close();
     }
+
     /**
      * Get SQL statement {@code String} that creates the specified table.
      *
@@ -113,6 +132,7 @@ public class SqlDump {
     public String getCreateTableSQL(String tableName) throws SQLException {
         return getCreateStatement(tableName, "SHOW CREATE TABLE `%s`");
     }
+
     /**
      * Get SQL statement {@code String} that creates the specified view.
      *
@@ -200,7 +220,7 @@ public class SqlDump {
             String value = nextValue(resultSet);
             printWriter.print(value);
 
-            if(!resultSet.isLast()) {
+            if (!resultSet.isLast()) {
                 printWriter.print(VALUE_DELIMITER);
             }
         }
@@ -222,7 +242,8 @@ public class SqlDump {
         return String.format(SEPARATE_INSERT_SQL_TEMPLATE, tableName, rowValue);
     }
 
-    String INSERT_VALUE_TEMPLATE ="(%s)";
+    String INSERT_VALUE_TEMPLATE = "(%s)";
+
     private String nextValue(ResultSet resultSet) throws SQLException, SqlDumpException {
         ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
 
@@ -235,6 +256,7 @@ public class SqlDump {
         String rowValue = String.join(VALUE_DELIMITER, rowValues);
         return String.format(INSERT_VALUE_TEMPLATE, rowValue);
     }
+
     /**
      * Get literal value of a column's value.
      *
