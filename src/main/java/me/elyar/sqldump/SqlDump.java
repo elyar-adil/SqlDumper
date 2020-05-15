@@ -34,6 +34,7 @@ public class SqlDump {
 
     private final static String COMMENT_TABLE_STRUCTURE = "--\n-- Table structure for %s\n--";
     private final static String COMMENT_VIEW_STRUCTURE = "--\n-- View structure for %s\n--";
+    private final static String COMMENT_DATABASE_STRUCTURE = "--\n-- Database structure for %s\n--";
     private final static String COMMENT_RECORDS = "--\n-- Data of table `%s`\n--";
     private final static String SHOW_TABLES = "SHOW FULL TABLES WHERE Table_type != 'VIEW'";
     private final static String SHOW_VIEWS = "SHOW FULL TABLES WHERE Table_type = 'VIEW'";
@@ -51,7 +52,7 @@ public class SqlDump {
 
         printWriter.println("-- SqlDump v1.0");
         printWriter.println();
-        printWriter.println("-- HOST: " +metaData.getURL().split("/")[2]);
+        printWriter.println("-- HOST: " + metaData.getURL().split("/")[2]);
         printWriter.println("-- DBMS Name: " + metaData.getDatabaseProductName());
         printWriter.println("-- DBMS Version: " + metaData.getDatabaseProductVersion());
         printWriter.println("-- ----------------------------------------------------");
@@ -99,15 +100,34 @@ public class SqlDump {
         printWriter.println();
     }
 
+    public void dumpDatabase(String databaseName, OutputStream outputStream) throws SQLException, SqlDumpException {
+        PrintWriter printWriter = new PrintWriter(outputStream);
+        printHead(printWriter);
+        printDumpPrefix(printWriter);
+
+        String createTableStatement= "CREATE DATABASE /*!32312 IF NOT EXISTS*/ `%s` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;\n";
+
+        printWriter.println(String.format(createTableStatement, databaseName));
+        printWriter.println(String.format("USE `%s`;", databaseName));
+
+        List<String> tableList = getTables(databaseName);
+        for(String table : tableList) {
+            dumpTable(table, printWriter);
+        }
+        printDumpSuffix(printWriter);
+        printWriter.flush();
+        printWriter.close();
+    }
+
     private void dumpTable(String tableName, PrintWriter printWriter) throws SQLException, SqlDumpException {
         printWriter.println(String.format(COMMENT_TABLE_STRUCTURE, tableName));
+
         String DROP_TABLE_TEMPLATE = "DROP TABLE IF EXISTS `%s`;";
         String dropTableSql = String.format(DROP_TABLE_TEMPLATE, tableName);
         printWriter.println(dropTableSql);
 
         printWriter.println(getCreateTableSQL(tableName) + SQL_DELIMITER);
         printWriter.println();
-        printWriter.println(String.format(COMMENT_RECORDS, tableName));
         getCompactInsertSQL(tableName, printWriter);
         printWriter.println();
     }
@@ -122,12 +142,13 @@ public class SqlDump {
         printWriter.println();
     }
 
-    private void selectDatabase(String database) throws SQLException {
+    public void selectDatabase(String database) throws SQLException {
         Statement statement = connection.createStatement();
         String sql = String.format("USE `%s`", database);
         statement.executeQuery(sql).close();
         statement.close();
     }
+
 
     /**
      * Get SQL statement {@code String} that creates the specified table.
@@ -182,6 +203,7 @@ public class SqlDump {
         statement.close();
         return databaseList;
     }
+
     /**
      * Get
      *
@@ -201,6 +223,7 @@ public class SqlDump {
         statement.close();
         return tableList;
     }
+
     /**
      * @param databaseName
      * @return
@@ -239,17 +262,26 @@ public class SqlDump {
 
         Statement statement = connection.createStatement();
         ResultSet resultSet = statement.executeQuery(selectSQL);
-        String insertPrefix = String.format(COMPACT_INSERT_SQL_PREFIX_TEMPLATE, tableName);
-        printWriter.print(insertPrefix);
+
+
+        boolean firstIteration = true;
         while (resultSet.next()) {
+            if(firstIteration) {
+                // print start of an insert statement
+                printWriter.println(String.format(COMMENT_RECORDS, tableName));
+                String insertPrefix = String.format(COMPACT_INSERT_SQL_PREFIX_TEMPLATE, tableName);
+                printWriter.print(insertPrefix);
+                firstIteration = false;
+            }
             String value = nextValue(resultSet);
             printWriter.print(value);
 
             if (!resultSet.isLast()) {
                 printWriter.print(VALUE_DELIMITER);
+            } else { // print delimiter after last record
+                printWriter.println(SQL_DELIMITER);
             }
         }
-        printWriter.println(SQL_DELIMITER);
         resultSet.close();
         statement.close();
     }
@@ -294,6 +326,7 @@ public class SqlDump {
      */
     private String getLiteralValue(ResultSet resultSet, int columnIndex, int columnType) throws SQLException, SqlDumpException {
         switch (columnType) {
+            // TODO year type
             // text type (surrounded by quotation marks and escaped):
             case Types.BIT:
             case Types.TINYINT:
