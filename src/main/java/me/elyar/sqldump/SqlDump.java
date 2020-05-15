@@ -182,7 +182,25 @@ public class SqlDump {
         statement.close();
         return databaseList;
     }
-
+    /**
+     * Get
+     *
+     * @return
+     * @throws SQLException
+     */
+    public List<String> getTables(String database) throws SQLException {
+        selectDatabase(database);
+        Statement statement = connection.createStatement();
+        ResultSet resultSet = statement.executeQuery(SHOW_TABLES);
+        List<String> tableList = new ArrayList<>();
+        while (resultSet.next()) {
+            String table = resultSet.getString(1);
+            tableList.add(table);
+        }
+        resultSet.close();
+        statement.close();
+        return tableList;
+    }
     /**
      * @param databaseName
      * @return

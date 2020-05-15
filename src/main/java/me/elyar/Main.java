@@ -12,6 +12,7 @@ public class Main {
         MysqlDataSource mysqlDataSource = new MysqlDataSource();
         mysqlDataSource.setUrl("jdbc:mysql://localhost:3306/activiti?user=root&password=password&serverTimezone=GMT%2B8");
         System.out.println(mysqlDataSource.getDatabaseName());
+
         SqlDump sqlDump = new SqlDump(mysqlDataSource);
         sqlDump.dumpTable(System.out, "act_re_procdef");
     }
