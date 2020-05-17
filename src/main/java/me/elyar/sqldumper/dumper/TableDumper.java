@@ -34,7 +34,7 @@ public class TableDumper extends Dumper {
     private static final String SEPARATE_INSERT_SQL_TEMPLATE = "INSERT INTO `%s` VALUES (%s);";
     private static final String COMPACT_INSERT_SQL_PREFIX_TEMPLATE = "INSERT INTO `%s` VALUES ";
 
-    private static final String SHOW_CREATE_TABLE = "SHOW CREATE TABLE `%s`";
+    private static final String SHOW_CREATE_TABLE_TEMPLATE = "SHOW CREATE TABLE `%s`";
     private static final String SELECT_DATA_TEMPLATE = "SELECT /*!40001 SQL_NO_CACHE */ * FROM `%s`";
 
     public TableDumper(Connection connection, PrintWriter printWriter) {
@@ -45,7 +45,7 @@ public class TableDumper extends Dumper {
      * Dump table.
      *
      * @param tableName name of the table
-     * @throws SQLException if a database access error occursp
+     * @throws SQLException if a database access error occurs
      */
     @Override
     public void dump(String tableName) throws SQLException {
@@ -58,6 +58,8 @@ public class TableDumper extends Dumper {
         printWriter.println();
         getCompactInsertSQL(tableName, printWriter);
         printWriter.println();
+
+        printWriter.flush();
     }
 
     /**
@@ -68,7 +70,7 @@ public class TableDumper extends Dumper {
      * @throws SQLException if a database access error occurs
      */
     private String getCreateTableSQL(String tableName) throws SQLException {
-        String sql = String.format(SHOW_CREATE_TABLE, tableName);
+        String sql = String.format(SHOW_CREATE_TABLE_TEMPLATE, tableName);
         return SqlQueryUtility.queryString(connection, sql, 2);
     }
 
