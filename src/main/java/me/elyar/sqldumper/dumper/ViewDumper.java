@@ -7,16 +7,22 @@ import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+/**
+ * This class is used to dump view.
+ *
+ * @author Elyar Adil
+ * @since 1.0
+ */
 public class ViewDumper extends Dumper {
 
-    public static final String SHOW_CREATE_VIEW_TEMPLATE = "SHOW CREATE VIEW `%s`";
-    public static final String DROP_TABLE_TEMPLATE = "DROP VIEW IF EXISTS `%s`;";
+    private static final String SHOW_CREATE_VIEW_TEMPLATE = "SHOW CREATE VIEW `%s`";
+    private static final String DROP_VIEW_TEMPLATE = "DROP VIEW IF EXISTS `%s`;";
+    private static final String COMMENT_VIEW_STRUCTURE = "View structure for %s";
+
 
     public ViewDumper(Connection connection, PrintWriter printWriter) {
         super(connection, printWriter);
     }
-
-    private final static String COMMENT_VIEW_STRUCTURE = "View structure for %s";
 
     /**
      * Dump view.
@@ -28,10 +34,10 @@ public class ViewDumper extends Dumper {
     public void dump(String viewName) throws SQLException {
         String structureHeadComment = String.format(COMMENT_VIEW_STRUCTURE, viewName);
         SqlCommentUtility.printCommentHeader(printWriter, structureHeadComment);
-        String dropTableSql = String.format(DROP_TABLE_TEMPLATE, viewName);
-        printWriter.println(dropTableSql);
+        String dropSql = String.format(DROP_VIEW_TEMPLATE, viewName);
+        printWriter.println(dropSql);
 
-        printWriter.println(getCreateViewSQL(viewName) + SQL_DELIMITER);
+        printWriter.println(getCreateViewSql(viewName) + SQL_DELIMITER);
         printWriter.println();
 
         printWriter.flush();
@@ -44,7 +50,8 @@ public class ViewDumper extends Dumper {
      * @return SQL statement {@code String}
      * @throws SQLException if a database access error occurs
      */
-    public String getCreateViewSQL(String viewName) throws SQLException {
-        return SqlQueryUtility.queryString(this.connection, String.format(SHOW_CREATE_VIEW_TEMPLATE, viewName), 2);
+    public String getCreateViewSql(String viewName) throws SQLException {
+        String sql = String.format(SHOW_CREATE_VIEW_TEMPLATE, viewName);
+        return SqlQueryUtility.queryString(this.connection, sql, 2);
     }
 }

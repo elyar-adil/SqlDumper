@@ -1,7 +1,6 @@
 package me.elyar.sqldumper.dumper;
 
 
-import me.elyar.sqldumper.exceptions.SqlDumperException;
 import me.elyar.sqldumper.utilities.SqlCommentUtility;
 
 import java.io.PrintWriter;

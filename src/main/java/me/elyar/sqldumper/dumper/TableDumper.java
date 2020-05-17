@@ -11,16 +11,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Dump table structure and data.
+ * This class is used to dump table structure and data.
  *
  * @author Elyar Adil
  * @since 1.0
  */
 public class TableDumper extends Dumper {
     // comments structure SQL statement
-    private final static String COMMENT_STRUCTURE = "Table structure for `%s`";
+    private static final String COMMENT_STRUCTURE = "Table structure for `%s`";
     // comments before insert statement
-    private final static String COMMENT_RECORDS = "Data of table `%s`";
+    private static final String COMMENT_RECORDS = "Data of table `%s`";
 
     public static final String STRING_NULL = "NULL";
     public static final String HEX_PREFIX = "0x";
@@ -37,6 +37,10 @@ public class TableDumper extends Dumper {
     private static final String SHOW_CREATE_TABLE_TEMPLATE = "SHOW CREATE TABLE `%s`";
     private static final String SELECT_DATA_TEMPLATE = "SELECT /*!40001 SQL_NO_CACHE */ * FROM `%s`";
 
+    // TODO dump triggers related to table
+    private static final String SHOW_TRIGGERS_OF_TABLE_TEMPLATE = "SHOW TRIGGERS WHERE `table` = '%s'";
+
+
     public TableDumper(Connection connection, PrintWriter printWriter) {
         super(connection, printWriter);
     }
@@ -51,8 +55,8 @@ public class TableDumper extends Dumper {
     public void dump(String tableName) throws SQLException {
         String commentHead = String.format(COMMENT_STRUCTURE, tableName);
         SqlCommentUtility.printCommentHeader(printWriter, commentHead);
-        String dropTableSql = String.format(DROP_TABLE_TEMPLATE, tableName);
-        printWriter.println(dropTableSql);
+        String dropSql = String.format(DROP_TABLE_TEMPLATE, tableName);
+        printWriter.println(dropSql);
         printWriter.println(getCreateTableSQL(tableName) + SQL_DELIMITER);
 
         printWriter.println();
