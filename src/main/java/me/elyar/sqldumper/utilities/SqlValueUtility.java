@@ -1,4 +1,4 @@
-package me.elyar.sqldump.utilities;
+package me.elyar.sqldumper.utilities;
 
 /**
  * Process values to literal value to be suitable to use in "INSERT"
@@ -7,7 +7,7 @@ package me.elyar.sqldump.utilities;
  * @author  Elyar Adil
  * @since   1.0
  */
-public class ValueUtility {
+public class SqlValueUtility {
     /**
      * Escape string for use in SQL statements.
      *

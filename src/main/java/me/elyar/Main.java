@@ -1,19 +1,25 @@
 package me.elyar;
 
 import com.mysql.cj.jdbc.MysqlDataSource;
-import me.elyar.sqldump.SqlDump;
-import me.elyar.sqldump.exceptions.SqlDumpException;
+import me.elyar.sqldumper.SqlDumper;
+import me.elyar.sqldumper.dumper.TableDumper;
+import me.elyar.sqldumper.exceptions.SqlDumperException;
+import me.elyar.sqldumper.utilities.SqlCommentUtility;
 
+import java.io.PrintWriter;
 import java.sql.SQLException;
 
 public class Main {
 
-    public static void main(String[] args) throws SQLException,  SqlDumpException {
+    public static void main(String[] args) throws SQLException, SqlDumperException {
         MysqlDataSource dataSource = new MysqlDataSource();
         dataSource.setUrl("jdbc:mysql://localhost:3306/sakila?user=root&password=password&serverTimezone=GMT%2B8");
 
-        SqlDump sqlDump = new SqlDump(dataSource);
-        sqlDump.dumpDatabase("sakila", System.out );
+        PrintWriter printWriter = new PrintWriter(System.out);
+        TableDumper tableDumper = new TableDumper(dataSource.getConnection(),printWriter);
+        tableDumper.dump("film");
+        printWriter.flush();
+        System.out.println(byte[].class.getName());
     }
 
 
