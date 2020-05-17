@@ -41,6 +41,12 @@ public class TableDumper extends Dumper {
         super(connection, printWriter);
     }
 
+    /**
+     * Dump table.
+     *
+     * @param tableName name of the table
+     * @throws SQLException if a database access error occursp
+     */
     @Override
     public void dump(String tableName) throws SQLException {
         String commentHead = String.format(COMMENT_STRUCTURE, tableName);
