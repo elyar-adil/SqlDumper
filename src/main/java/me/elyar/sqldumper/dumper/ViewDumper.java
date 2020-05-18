@@ -1,5 +1,8 @@
 package me.elyar.sqldumper.dumper;
 
+import me.elyar.sqldumper.utilities.SqlCommentUtility;
+import me.elyar.sqldumper.utilities.SqlQueryUtility;
+
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -10,7 +13,7 @@ import java.sql.SQLException;
  * @author Elyar Adil
  * @since 1.0
  */
-public class ViewDumper extends MethodDumper {
+public class ViewDumper extends Dumper {
 
     private static final String SHOW_CREATE_VIEW_TEMPLATE = "SHOW CREATE VIEW `%s`";
     private static final String DROP_VIEW_TEMPLATE = "DROP VIEW IF EXISTS `%s`;";
@@ -29,7 +32,26 @@ public class ViewDumper extends MethodDumper {
      */
     @Override
     public void dump(String viewName) throws SQLException {
-        dump(viewName, COMMENT_VIEW_STRUCTURE,DROP_VIEW_TEMPLATE, SHOW_CREATE_VIEW_TEMPLATE, 2);
+        String structureHeadComment = String.format(COMMENT_VIEW_STRUCTURE, viewName);
+        SqlCommentUtility.printCommentHeader(printWriter, structureHeadComment);
+        String dropSql = String.format(DROP_VIEW_TEMPLATE, viewName);
+        printWriter.println(dropSql);
+
+        printWriter.println(getCreateViewSql(viewName) + SQL_DELIMITER);
+        printWriter.println();
+
+        printWriter.flush();
     }
 
+    /**
+     * Get SQL statement {@code String} that creates the specified view.
+     *
+     * @param viewName name of the view
+     * @return SQL statement {@code String}
+     * @throws SQLException if a database access error occurs
+     */
+    public String getCreateViewSql(String viewName) throws SQLException {
+        String sql = String.format(SHOW_CREATE_VIEW_TEMPLATE, viewName);
+        return SqlQueryUtility.queryString(this.connection, sql, 2);
+    }
 }

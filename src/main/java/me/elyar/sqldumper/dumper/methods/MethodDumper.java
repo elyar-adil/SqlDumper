@@ -1,5 +1,6 @@
-package me.elyar.sqldumper.dumper;
+package me.elyar.sqldumper.dumper.methods;
 
+import me.elyar.sqldumper.dumper.Dumper;
 import me.elyar.sqldumper.utilities.SqlCommentUtility;
 import me.elyar.sqldumper.utilities.SqlQueryUtility;
 

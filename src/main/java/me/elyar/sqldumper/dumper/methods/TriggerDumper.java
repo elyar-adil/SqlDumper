@@ -1,4 +1,5 @@
-package me.elyar.sqldumper.dumper;
+package me.elyar.sqldumper.dumper.methods;
+
 
 
 import java.io.PrintWriter;
