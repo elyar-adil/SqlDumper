@@ -140,14 +140,6 @@ public class SqlDumper {
         return getCreateStatement(databaseName, "SHOW CREATE DATABASE IF NOT EXISTS `%s`");
     }
 
-    /**
-     * @param procedureName
-     * @return
-     * @throws SQLException
-     */
-    public String getCreateProcedureSQL(String procedureName) throws SQLException {
-        return getCreateStatement(procedureName, "SHOW CREATE PROCEDURE `%s`");
-    }
 
     /**
      * Return list of column names from given {@code ResultSet}

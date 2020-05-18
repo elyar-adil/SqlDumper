@@ -10,6 +10,7 @@ import java.sql.SQLException;
 public class ProcedureDumper extends Dumper {
     private static final String SHOW_CREATE_PROCEDURE_TEMPLATE = "SHOW CREATE PROCEDURE `%s`";
     private static final String DROP_PROCEDURE_TEMPLATE = "DROP PROCEDURE IF EXISTS `%s`;";
+    private static final String COMMENT_PROCEDURE_STRUCTURE = "Procedure structure for %s";
 
     public ProcedureDumper(Connection connection, PrintWriter printWriter) {
         super(connection, printWriter);
@@ -17,7 +18,7 @@ public class ProcedureDumper extends Dumper {
 
     @Override
     public void dump(String procedureName) throws SQLException {
-        String structureHeadComment = String.format(SHOW_CREATE_PROCEDURE_TEMPLATE, procedureName);
+        String structureHeadComment = String.format(COMMENT_PROCEDURE_STRUCTURE, procedureName);
         SqlCommentUtility.printCommentHeader(printWriter, structureHeadComment);
         String dropSql = String.format(DROP_PROCEDURE_TEMPLATE, procedureName);
         printWriter.println(dropSql);
