@@ -1,6 +1,6 @@
 # SqlDumper
 
-A Java libaray to dump MySQL databases, without binary dependencies.
+A Java library to dump MySQL databases, without binary dependencies.
 
 Usage:
 ```java
