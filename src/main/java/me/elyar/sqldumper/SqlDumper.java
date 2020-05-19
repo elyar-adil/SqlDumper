@@ -19,8 +19,14 @@ import java.util.List;
  */
 public class SqlDumper {
 
-    private final static String SHOW_TABLES = "SHOW FULL TABLES WHERE Table_type != 'VIEW'";
-    private final static String SHOW_VIEWS = "SHOW FULL TABLES WHERE Table_type = 'VIEW'";
+    private final static String SHOW_TABLES = "SHOW FULL TABLES WHERE Table_type != 'VIEW'"; // name at column 1
+    private final static String SHOW_VIEWS = "SHOW FULL TABLES WHERE Table_type = 'VIEW'"; // name at column 1
+    private final static String SHOW_DATABASES = "SHOW DATABASES"; // name at column 1
+    private final static String SHOW_FUNCTIONS ="SHOW FUNCTION STATUS WHERE Db = '%s'"; // name at column 2
+    private final static String SHOW_ALL_FUNCTIONS ="SHOW FUNCTION STATUS"; // name at column 2
+    private final static String SHOW_TRIGGERS = "SHOW TRIGGERS"; // name at column 1
+    private final static String SHOW_EVENTS = "SHOW EVENTS WHERE Db = '%s'"; // name at column 2
+    private final static String SHOW_ALL_EVENTS = "SHOW EVENTS"; // name at column 2
 
     private final Connection connection;
 
@@ -38,7 +44,6 @@ public class SqlDumper {
     }
 
 
-
     public void dumpDatabase(String databaseName, OutputStream outputStream) throws SQLException, SqlDumperException {
         PrintWriter printWriter = new PrintWriter(outputStream);
         DumpUtility.printHeadInfo(connection, printWriter);
@@ -49,7 +54,7 @@ public class SqlDumper {
         printWriter.println(String.format(createTableStatement, databaseName));
         printWriter.println(String.format("USE `%s`;", databaseName));
 
-        List<String> tableList = getTables(databaseName);
+        List<String> tableList = listTable(databaseName);
         for (String table : tableList) {
 //            dumpTable(table, printWriter);
         }
@@ -68,44 +73,15 @@ public class SqlDumper {
 
 
     /**
-     * Get SQL statement {@code String} that creates the specified table.
-     *
-     * @param tableName name of the table
-     * @return SQL statement {@code String}
-     * @throws SQLException if a database access error occurs
-     */
-    public String getCreateTableSQL(String tableName) throws SQLException {
-        return getCreateStatement(tableName, "SHOW CREATE TABLE `%s`");
-    }
-
-
-    private String getCreateStatement(String viewName, String sqlTemplate) throws SQLException {
-        Statement statement = connection.createStatement();
-        String sql = String.format(sqlTemplate, viewName);
-        ResultSet resultSet = statement.executeQuery(sql);
-        resultSet.next();
-        // First column is same as tableName, create statement is at second column.
-        String createStatement = resultSet.getString(2);
-        resultSet.close();
-        statement.close();
-        return createStatement;
-    }
-
-    /**
      * Get
      *
      * @return
      * @throws SQLException
      */
-    public List<String> getDatabaseList() throws SQLException {
+    public List<String> listDatabase() throws SQLException {
         Statement statement = connection.createStatement();
-        String sql = "SHOW DATABASES";
-        ResultSet resultSet = statement.executeQuery(sql);
-        List<String> databaseList = new ArrayList<>();
-        while (resultSet.next()) {
-            String database = resultSet.getString(1);
-            databaseList.add(database);
-        }
+        ResultSet resultSet = statement.executeQuery(SHOW_DATABASES);
+        List<String> databaseList = getStringListFromResultSet(resultSet);
         resultSet.close();
         statement.close();
         return databaseList;
@@ -117,46 +93,24 @@ public class SqlDumper {
      * @return
      * @throws SQLException
      */
-    public List<String> getTables(String database) throws SQLException {
+    public List<String> listTable(String database) throws SQLException {
         selectDatabase(database);
         Statement statement = connection.createStatement();
         ResultSet resultSet = statement.executeQuery(SHOW_TABLES);
-        List<String> tableList = new ArrayList<>();
-        while (resultSet.next()) {
-            String table = resultSet.getString(1);
-            tableList.add(table);
-        }
+        List<String> tableList = getStringListFromResultSet(resultSet);
         resultSet.close();
         statement.close();
         return tableList;
     }
 
-    /**
-     * @param databaseName
-     * @return
-     * @throws SQLException
-     */
-    public String getCreateDatabaseSQL(String databaseName) throws SQLException {
-        return getCreateStatement(databaseName, "SHOW CREATE DATABASE IF NOT EXISTS `%s`");
-    }
-
-
-    /**
-     * Return list of column names from given {@code ResultSet}
-     *
-     * @param resultSet the {@code ResultSet} to retrieve column names from
-     * @return {@code List<String>} contains column names
-     * @throws SQLException if a database access error occurs
-     */
-    private List<String> getColumnNameList(ResultSet resultSet) throws SQLException {
-        ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
-        // set initialCapacity to column count
-        List<String> columnNameList = new ArrayList<>(resultSetMetaData.getColumnCount());
-
-        // column index starts from 1
-        for (int columnIndex = 1; columnIndex <= resultSetMetaData.getColumnCount(); columnIndex++) {
-            columnNameList.add(resultSetMetaData.getColumnName(columnIndex));
+    private List<String> getStringListFromResultSet(ResultSet resultSet) throws SQLException {
+        List<String> stringList = new ArrayList<>();
+        while (resultSet.next()) {
+            String table = resultSet.getString(1);
+            stringList.add(table);
         }
-        return columnNameList;
+        return stringList;
     }
+
+
 }

@@ -34,7 +34,7 @@ public class SqlCommentUtility {
 
     public static void printCommentBlockLine(PrintWriter printWriter, String comment) {
         printWriter.println(COMMENT_BLOCK_PREFIX);
-        String lines[] = comment.split("\\r?\\n");
+        String[] lines = comment.split("\\r?\\n");
         for(String line : lines) {
             printWriter.println(COMMENT_BLOCK_PADDING + line);
         }
