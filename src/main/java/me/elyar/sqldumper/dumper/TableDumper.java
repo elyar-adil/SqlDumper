@@ -200,7 +200,7 @@ public class TableDumper extends Dumper {
             case "java.lang.Float":
             case "java.lang.Double":
             case "java.math.BigDecimal":
-            case "java.sql.Short":
+            case "java.lang.Short":
                 return getColumnValue(resultSet, columnIndex, false, false);
             case "java.sql.Date":
             case "java.sql.Timestamp":
