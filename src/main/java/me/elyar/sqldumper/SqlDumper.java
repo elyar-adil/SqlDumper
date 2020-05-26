@@ -2,7 +2,8 @@ package me.elyar.sqldumper;
 
 import com.mysql.cj.jdbc.MysqlDataSource;
 import me.elyar.sqldumper.dumper.TableDumper;
-import me.elyar.sqldumper.utilities.DumpUtility;
+import me.elyar.sqldumper.utilities.DumpInfoUtility;
+import me.elyar.sqldumper.utilities.SqlShowUtility;
 
 import javax.sql.DataSource;
 import java.io.OutputStream;
@@ -52,22 +53,21 @@ public class SqlDumper {
 
     public void dumpDatabase(String databaseName, OutputStream outputStream) throws SQLException {
         PrintWriter printWriter = new PrintWriter(outputStream);
-        DumpUtility.printHeadInfo(connection, printWriter);
-        DumpUtility.printDumpPrefix(printWriter);
+        DumpInfoUtility.printHeadInfo(connection, printWriter);
+        DumpInfoUtility.printDumpPrefix(printWriter);
 
         String createTableStatement = "CREATE DATABASE /*!32312 IF NOT EXISTS*/ `%s` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;\n";
 
         printWriter.println(String.format(createTableStatement, databaseName));
         printWriter.println(String.format("USE `%s`;", databaseName));
-        SqlInformation sqlInformation = new SqlInformation(connection);
 
-        List<String> tableList = sqlInformation.listTable(databaseName);
+        List<String> tableList = SqlShowUtility.listTable(connection, databaseName);
         TableDumper tableDumper = new TableDumper(connection, printWriter);
         for (String table : tableList) {
             tableDumper.dump(table);
         }
 
-        DumpUtility.printDumpSuffix(printWriter);
+        DumpInfoUtility.printDumpSuffix(printWriter);
         printWriter.flush();
         printWriter.close();
     }

@@ -15,6 +15,24 @@ public class SqlQueryUtility {
         statement.close();
         return createStatement;
     }
+
+    public static List<String> queryStringList(Connection connection, String sql, int columnIndex) throws SQLException {
+        Statement statement = connection.createStatement();
+        ResultSet resultSet = statement.executeQuery(sql);
+        List<String> resultList = getStringListFromResultSet(connection, resultSet, columnIndex);
+        resultSet.close();
+        statement.close();
+        return resultList;
+    }
+
+    private static List<String> getStringListFromResultSet(Connection connection, ResultSet resultSet, int columnIndex) throws SQLException {
+        List<String> stringList = new ArrayList<>();
+        while (resultSet.next()) {
+            String table = resultSet.getString(columnIndex);
+            stringList.add(table);
+        }
+        return stringList;
+    }
     /**
      * Return list of column names from given {@code ResultSet}
      *
@@ -22,7 +40,7 @@ public class SqlQueryUtility {
      * @return {@code List<String>} contains column names
      * @throws SQLException if a database access error occurs
      */
-    private List<String> getColumnNameList(ResultSet resultSet) throws SQLException {
+    private List<String> columnName(ResultSet resultSet) throws SQLException {
         ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
         // set initialCapacity to column count
         List<String> columnNameList = new ArrayList<>(resultSetMetaData.getColumnCount());
@@ -32,5 +50,12 @@ public class SqlQueryUtility {
             columnNameList.add(resultSetMetaData.getColumnName(columnIndex));
         }
         return columnNameList;
+    }
+
+    public static void selectDatabase(Connection connection, String database) throws SQLException {
+        Statement statement = connection.createStatement();
+        String sql = String.format("USE `%s`", database);
+        statement.executeQuery(sql).close();
+        statement.close();
     }
 }
