@@ -209,6 +209,7 @@ public class TableDumper extends Dumper {
             case "java.lang.String":
                 return getColumnValue(resultSet, columnIndex, true, true);
             case "[B":
+            case "java.lang.Object":
                 return getHexColumnValue(resultSet, columnIndex);
             default:
                 throw new IllegalStateException("Unexpected columnClassName: " + columnClassName);
