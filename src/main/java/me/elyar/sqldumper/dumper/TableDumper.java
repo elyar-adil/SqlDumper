@@ -1,6 +1,5 @@
 package me.elyar.sqldumper.dumper;
 
-import me.elyar.sqldumper.exceptions.SqlDumperException;
 import me.elyar.sqldumper.utilities.SqlCommentUtility;
 import me.elyar.sqldumper.utilities.SqlQueryUtility;
 import me.elyar.sqldumper.utilities.SqlValueUtility;
@@ -36,10 +35,6 @@ public class TableDumper extends Dumper {
 
     private static final String SHOW_CREATE_TABLE_TEMPLATE = "SHOW CREATE TABLE `%s`";
     private static final String SELECT_DATA_TEMPLATE = "SELECT /*!40001 SQL_NO_CACHE */ * FROM `%s`";
-
-    // TODO dump triggers related to table
-    private static final String SHOW_TRIGGERS_OF_TABLE_TEMPLATE = "SHOW TRIGGERS WHERE `table` = '%s'";
-
 
     public TableDumper(Connection connection, PrintWriter printWriter) {
         super(connection, printWriter);
@@ -189,7 +184,6 @@ public class TableDumper extends Dumper {
      * @param columnClassName Returns the fully-qualified name of the Java class
      * @return Literal value of given column
      * @throws SQLException       if a database access error occurs
-     * @throws SqlDumperException Encounters unsupported SQL type
      */
     private String getLiteralValue(ResultSet resultSet, int columnIndex, String columnClassName) throws SQLException {
         switch (columnClassName) {
