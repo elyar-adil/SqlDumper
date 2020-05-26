@@ -17,6 +17,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.sql.*;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Dump database using JDBC without binary any dependencies.
@@ -59,19 +60,23 @@ public class SqlDumper {
     }
 
 
-    public void dumpAllDatabase(OutputStream outputStream) throws SQLException {
+    public void dumpAllDatabase(OutputStream outputStream, Set<String> exceptSet) throws SQLException {
         PrintWriter printWriter = new PrintWriter(outputStream);
         DumpInfoUtility.printHeadInfo(connection, printWriter);
         DumpInfoUtility.printDumpPrefix(printWriter);
 
         List<String> databaseList = SqlShowUtility.listDatabase(connection);
         for(String databaseName : databaseList) {
+            if(exceptSet != null && !exceptSet.contains(databaseName))
             _dumpDatabase(databaseName, printWriter);
         }
         DumpInfoUtility.printDumpSuffix(printWriter);
         DumpInfoUtility.printTailInfo(printWriter);
         printWriter.flush();
         printWriter.close();
+    }
+    public void dumpAllDatabase(OutputStream outputStream) throws SQLException {
+        dumpAllDatabase(outputStream, null);
     }
 
     public void dumpDatabase(String databaseName, OutputStream outputStream) throws SQLException {
