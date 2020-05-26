@@ -1,8 +1,15 @@
 package me.elyar.sqldumper;
 
 import com.mysql.cj.jdbc.MysqlDataSource;
+import me.elyar.sqldumper.dumper.DatabaseDumper;
 import me.elyar.sqldumper.dumper.TableDumper;
+import me.elyar.sqldumper.dumper.ViewDumper;
+import me.elyar.sqldumper.dumper.methods.EventDumper;
+import me.elyar.sqldumper.dumper.methods.FunctionDumper;
+import me.elyar.sqldumper.dumper.methods.ProcedureDumper;
+import me.elyar.sqldumper.dumper.methods.TriggerDumper;
 import me.elyar.sqldumper.utilities.DumpInfoUtility;
+import me.elyar.sqldumper.utilities.SqlQueryUtility;
 import me.elyar.sqldumper.utilities.SqlShowUtility;
 
 import javax.sql.DataSource;
@@ -33,6 +40,7 @@ public class SqlDumper {
             throw new UnsupportedOperationException("Unsupported DataSource!");
         }
     }
+
     public SqlDumper(String url, String user, String password) throws SQLException {
         MysqlDataSource mysqlDataSource = new MysqlDataSource();
         mysqlDataSource.setPassword(password);
@@ -51,29 +59,78 @@ public class SqlDumper {
     }
 
 
+    public void dumpAllDatabase(OutputStream outputStream) throws SQLException {
+        PrintWriter printWriter = new PrintWriter(outputStream);
+        DumpInfoUtility.printHeadInfo(connection, printWriter);
+        DumpInfoUtility.printDumpPrefix(printWriter);
+
+        List<String> databaseList = SqlShowUtility.listDatabase(connection);
+        for(String databaseName : databaseList) {
+            _dumpDatabase(databaseName, printWriter);
+        }
+        DumpInfoUtility.printDumpSuffix(printWriter);
+        DumpInfoUtility.printTailInfo(printWriter);
+        printWriter.flush();
+        printWriter.close();
+    }
+
     public void dumpDatabase(String databaseName, OutputStream outputStream) throws SQLException {
         PrintWriter printWriter = new PrintWriter(outputStream);
         DumpInfoUtility.printHeadInfo(connection, printWriter);
         DumpInfoUtility.printDumpPrefix(printWriter);
 
-        String createTableStatement = "CREATE DATABASE /*!32312 IF NOT EXISTS*/ `%s` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;\n";
-
-        printWriter.println(String.format(createTableStatement, databaseName));
-        printWriter.println(String.format("USE `%s`;", databaseName));
-
-        List<String> tableList = SqlShowUtility.listTable(connection, databaseName);
-        TableDumper tableDumper = new TableDumper(connection, printWriter);
-        for (String table : tableList) {
-            tableDumper.dump(table);
-        }
+        _dumpDatabase(databaseName, printWriter);
 
         DumpInfoUtility.printDumpSuffix(printWriter);
+        DumpInfoUtility.printTailInfo(printWriter);
         printWriter.flush();
         printWriter.close();
     }
 
+    private void _dumpDatabase(String databaseName, PrintWriter printWriter) throws SQLException {
+        SqlQueryUtility.selectDatabase(connection, databaseName);
 
+        DatabaseDumper databaseDumper = new DatabaseDumper(connection, printWriter);
+        TableDumper tableDumper = new TableDumper(connection, printWriter);
+        TriggerDumper triggerDumper = new TriggerDumper(connection, printWriter);
+        ViewDumper viewDumper = new ViewDumper(connection, printWriter);
+        FunctionDumper functionDumper = new FunctionDumper(connection, printWriter);
+        ProcedureDumper procedureDumper = new ProcedureDumper(connection, printWriter);
+        EventDumper eventDumper = new EventDumper(connection, printWriter);
 
+        String createDatabaseSql = databaseDumper.getCreateDatabaseSQL(databaseName);
+        printWriter.println(createDatabaseSql);
+        printWriter.println(String.format("USE `%s`;", databaseName));
+
+        List<String> tableList = SqlShowUtility.listTable(connection, databaseName);
+        for (String table : tableList) {
+            tableDumper.dump(table);
+            List<String> triggerList = SqlShowUtility.listTriggerOfTable(connection, databaseName, table);
+            for (String trigger : triggerList) {
+                triggerDumper.dump(trigger);
+            }
+        }
+
+        List<String> viewList = SqlShowUtility.listView(connection, databaseName);
+        for (String view : viewList) {
+            viewDumper.dump(view);
+        }
+
+        List<String> functionList = SqlShowUtility.listFunction(connection, databaseName);
+        for (String function : functionList) {
+            functionDumper.dump(function);
+        }
+
+        List<String> procedureList = SqlShowUtility.listProcedure(connection, databaseName);
+        for (String procedure : procedureList) {
+            procedureDumper.dump(procedure);
+        }
+
+        List<String> eventList = SqlShowUtility.listEvent(connection, databaseName);
+        for (String event : eventList) {
+            eventDumper.dump(event);
+        }
+    }
 
 
 }

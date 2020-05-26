@@ -15,7 +15,7 @@ public class Main {
         dataSource.setUrl("jdbc:mysql://localhost:3306/sakila?user=root&password=password&serverTimezone=GMT%2B8");
 
         SqlDumper sqlDumper = new SqlDumper("jdbc:mysql://localhost:3306/sakila?user=root&password=password&serverTimezone=GMT%2B8");
-        sqlDumper.dumpDatabase("sakila", System.out);
+        sqlDumper.dumpAllDatabase(System.out);
     }
 
 
