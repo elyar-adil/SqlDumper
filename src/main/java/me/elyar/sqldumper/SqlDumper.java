@@ -71,7 +71,6 @@ public class SqlDumper {
             _dumpDatabase(databaseName, printWriter);
         }
         DumpInfoUtility.printDumpSuffix(printWriter);
-        DumpInfoUtility.printTailInfo(printWriter);
         printWriter.flush();
         printWriter.close();
     }
@@ -87,7 +86,6 @@ public class SqlDumper {
         _dumpDatabase(databaseName, printWriter);
 
         DumpInfoUtility.printDumpSuffix(printWriter);
-        DumpInfoUtility.printTailInfo(printWriter);
         printWriter.flush();
         printWriter.close();
     }
@@ -103,8 +101,8 @@ public class SqlDumper {
         ProcedureDumper procedureDumper = new ProcedureDumper(connection, printWriter);
         EventDumper eventDumper = new EventDumper(connection, printWriter);
 
-        String createDatabaseSql = databaseDumper.getCreateDatabaseSQL(databaseName);
-        printWriter.println(createDatabaseSql);
+        databaseDumper.dump(databaseName);
+
         printWriter.println(String.format("USE `%s`;", databaseName));
 
         List<String> tableList = SqlShowUtility.listTable(connection, databaseName);

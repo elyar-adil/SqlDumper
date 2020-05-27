@@ -21,19 +21,25 @@ public class TableDumper extends Dumper {
     // comments before insert statement
     private static final String COMMENT_RECORDS = "Data of table `%s`";
 
+    // constants to be used in values of insert statement.
     public static final String STRING_NULL = "NULL";
     public static final String HEX_PREFIX = "0x";
 
+    // marks
     public static final String LEFT_QUOTATION_MARK = "'";
     public static final String RIGHT_QUOTATION_MARK = "'";
     public static final String VALUE_DELIMITER = ", ";
 
+    // sql templates
     private static final String DROP_TABLE_TEMPLATE = "DROP TABLE IF EXISTS `%s`;";
 
+    // multiple records separated into different insert statement
     private static final String SEPARATE_INSERT_SQL_TEMPLATE = "INSERT INTO `%s` VALUES (%s);";
+    // multiple records compacted into one insert statement
     private static final String COMPACT_INSERT_SQL_PREFIX_TEMPLATE = "INSERT INTO `%s` VALUES ";
-
+    // show create table statement
     private static final String SHOW_CREATE_TABLE_TEMPLATE = "SHOW CREATE TABLE `%s`";
+    // used to retrieve records of table
     private static final String SELECT_DATA_TEMPLATE = "SELECT /*!40001 SQL_NO_CACHE */ * FROM `%s`";
 
     public TableDumper(Connection connection, PrintWriter printWriter) {

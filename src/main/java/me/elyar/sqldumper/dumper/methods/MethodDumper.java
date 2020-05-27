@@ -54,11 +54,12 @@ public abstract class MethodDumper extends Dumper {
         String dropSql = String.format(dropTemplate, methodName);
         printWriter.println(dropSql);
         // dump create statement
-        printWriter.println("delimiter ;;");
+        String doubleDelimiter = SQL_DELIMITER + SQL_DELIMITER;
+        printWriter.println("delimiter " + doubleDelimiter);
         String sql = String.format(createTemplate, methodName);
         printWriter.println(SqlQueryUtility.queryString(this.connection, sql, createIndex) + SQL_DELIMITER);
-        printWriter.println(";;");
-        printWriter.println("delimiter ;");
+        printWriter.println(doubleDelimiter);
+        printWriter.println("delimiter " + SQL_DELIMITER);
         printWriter.println();
 
         printWriter.flush();

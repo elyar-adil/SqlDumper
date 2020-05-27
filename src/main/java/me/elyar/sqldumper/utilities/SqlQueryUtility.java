@@ -4,7 +4,22 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Sql query utility class.
+ *
+ * @author Elyar Adil
+ * @since 1.0
+ */
 public class SqlQueryUtility {
+    /**
+     * Get string from database.
+     *
+     * @param connection  sql connection
+     * @param sql         sql statement
+     * @param columnIndex index of column to retrieve string
+     * @return string to be queried.
+     * @throws SQLException if a database access error occurs
+     */
     public static String queryString(Connection connection, String sql, int columnIndex) throws SQLException {
         Statement statement = connection.createStatement();
         ResultSet resultSet = statement.executeQuery(sql);
@@ -16,6 +31,15 @@ public class SqlQueryUtility {
         return createStatement;
     }
 
+    /**
+     * Query list of string.
+     *
+     * @param connection  sql connection
+     * @param sql         sql statement
+     * @param columnIndex index of column to retrieve string
+     * @return list of string
+     * @throws SQLException if a database access error occurs
+     */
     public static List<String> queryStringList(Connection connection, String sql, int columnIndex) throws SQLException {
         Statement statement = connection.createStatement();
         ResultSet resultSet = statement.executeQuery(sql);
@@ -25,6 +49,15 @@ public class SqlQueryUtility {
         return resultList;
     }
 
+    /**
+     * Retrieve list of string from resultSet.
+     *
+     * @param connection  sql connection
+     * @param resultSet   where to retrieve string
+     * @param columnIndex index of column to retrieve string
+     * @return list of string
+     * @throws SQLException if a database access error occurs
+     */
     private static List<String> getStringListFromResultSet(Connection connection, ResultSet resultSet, int columnIndex) throws SQLException {
         List<String> stringList = new ArrayList<>();
         while (resultSet.next()) {
@@ -33,6 +66,7 @@ public class SqlQueryUtility {
         }
         return stringList;
     }
+
     /**
      * Return list of column names from given {@code ResultSet}
      *
@@ -52,6 +86,13 @@ public class SqlQueryUtility {
         return columnNameList;
     }
 
+    /**
+     * Select database.
+     *
+     * @param connection sql connection
+     * @param database   name of database to be selected
+     * @throws SQLException if a database access error occurs
+     */
     public static void selectDatabase(Connection connection, String database) throws SQLException {
         Statement statement = connection.createStatement();
         String sql = String.format("USE `%s`", database);

@@ -20,6 +20,12 @@ public class ViewDumper extends Dumper {
     private static final String COMMENT_VIEW_STRUCTURE = "View structure for %s";
 
 
+    /**
+     * Constructor
+     *
+     * @param connection  set connection of dumper
+     * @param printWriter set printWriter of dumper
+     */
     public ViewDumper(Connection connection, PrintWriter printWriter) {
         super(connection, printWriter);
     }
