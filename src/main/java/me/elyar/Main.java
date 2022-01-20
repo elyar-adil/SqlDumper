@@ -10,5 +10,4 @@ public class Main {
         sqlDumper.dumpAllDatabase(System.out);
     }
 
-
 }
