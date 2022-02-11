@@ -5,5 +5,5 @@ A pure Java library to dump MySQL databases, without using binary dependencies l
 Usage:
 ```java
 SqlDumper sqlDumper = new SqlDumper("jdbc:mysql://localhost:3306/...");
-sqlDumper.dump(System.out);
+sqlDumper.dumpAllDatabase(System.out);
 ```
